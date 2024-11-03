@@ -1,0 +1,28 @@
+{
+  "name": "rapidtube",
+  "private": true,
+  "version": "3.2.0",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "build": "python3 -m venv venv && . venv/bin/activate && pip install yt-dlp",
+    "start": "node app.js",
+    "test": "jest",
+    "style": "npx prettier . --write"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "prettier": "^3.3.3",
+    "redis": "^4.7.0"
+  },
+  "author": "Netaji",
+  "license": "ISC",
+  "devDependencies": {
+    "jsdoc": "^4.0.3",
+    "nodemon": "^3.1.4"
+  }
+}
