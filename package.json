@@ -5,9 +5,9 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "build": "python3 -m venv venv && . venv/bin/activate && pip install yt-dlp",
+    "prebuild": "apt-get update && apt-get install -y python3-pip",
+    "build": "pip3 install --user yt-dlp"
     "start": "node app.js",
-    "test": "jest",
     "style": "npx prettier . --write"
   },
   "dependencies": {
