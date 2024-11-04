@@ -5,8 +5,6 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "prebuild": "apt-get update && apt-get install -y python3-pip",
-    "build": "pip3 install --user yt-dlp",
     "start": "node app.js",
     "style": "npx prettier . --write"
   },
