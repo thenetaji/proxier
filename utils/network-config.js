@@ -1,77 +1,44 @@
-/**IP rotation util - modified from ytdl-core**/
+function generateIp(version = 4, count = 1) {
+    /**
+     * Generate random IP addresses.
+     * 
+     * @param {number} version - IP version (4 or 6). Defaults to 4.
+     * @param {number} count - Number of IPs to generate. Defaults to 1.
+     * @returns {string | string[]} - Generated IP address(es)
+     */
+    if (![4, 6].includes(version)) {
+        throw new Error("IP version must be 4 or 6");
+    }
 
-/**
- * Gets random IPv6 Address from a block
- * @param {string} ip the IPv6 block in CIDR-Notation
- * @returns {string}
- */
-const getRandomIPv6 = ip => {
-  // Start with a fast Regex-Check
-  if (!isIPv6(ip)) throw Error("Invalid IPv6 format");
-  
-  // Split and normalize addr and mask
-  const [rawAddr, rawMask] = ip.split("/");
-  let base10Mask = parseInt(rawMask);
-  if (!base10Mask || base10Mask > 128 || base10Mask < 24) throw Error("Invalid IPv6 subnet");
-  
-  const base10addr = normalizeIP(rawAddr);
-  // Get random addr to pad with
-  const randomAddr = new Array(8).fill(1).map(() => Math.floor(Math.random() * 0xffff));
+    if (count < 1) {
+        throw new Error("Count must be at least 1");
+    }
 
-  // Merge base10addr with randomAddr
-  const mergedAddr = randomAddr.map((randomItem, idx) => {
-    // Calculate the amount of static bits
-    const staticBits = Math.min(base10Mask, 16);
-    // Adjust the bitmask with the staticBits
-    base10Mask -= staticBits;
-    // Calculate the bitmask
-    const mask = 0xffff - (2 ** (16 - staticBits) - 1);
-    // Combine base10addr and random
-    return (base10addr[idx] & mask) + (randomItem & (mask ^ 0xffff));
-  });
+    const ips = [];
 
-  // Convert to proper IPv6 format with padding
-  return mergedAddr.map(x => x.toString(16).padStart(4, '0')).join(":");
-};
+    for (let i = 0; i < count; i++) {
+        let ip;
+        
+        if (version === 4) {
+            // Generate 4 octets for IPv4
+            ip = Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join(".");
+        } else {
+            // Generate 8 groups of 4 hexadecimal digits for IPv6
+            const hexDigits = "0123456789abcdef";
+            ip = Array.from({ length: 8 }, () => 
+                Array.from({ length: 4 }, () => hexDigits[Math.floor(Math.random() * hexDigits.length)]).join("")
+            ).join(":");
+        }
 
-// IPv6 CIDR regex - allows for compressed notation
-const IPV6_REGEX = /^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))\/(1[0-1]\d|12[0-8]|\d{1,2})$/;
+        ips.push(ip);
+    }
 
-/**
- * Quick check for a valid IPv6
- * @param {string} ip the IPv6 block in CIDR-Notation to test
- * @returns {boolean} true if valid
- */
-const isIPv6 = ip => IPV6_REGEX.test(ip);
+    return count > 1 ? ips : ips[0];
+}
 
-/**
- * Normalise an IP Address
- * @param {string} ip the IPv6 Addr
- * @returns {number[]} the 8 parts of the IPv6 as Integers
- */
-const normalizeIP = ip => {
-  // Handle compressed notation
-  const expanded = ip.includes('::') 
-    ? expandIPv6(ip)
-    : ip;
-    
-  // Split and convert to integers
-  const parts = expanded.split(':');
-  return parts.map(part => parseInt(part, 16) || 0);
-};
-
-/**
- * Expands compressed IPv6 notation
- * @param {string} ip the IPv6 address with possible compression
- * @returns {string} fully expanded IPv6 address
- */
-const expandIPv6 = ip => {
-  const [left, right] = ip.split('::').map(part => part.split(':'));
-  const missing = 8 - (left.length + right.length);
-  const middle = Array(missing).fill('0');
-  const parts = [...left, ...middle, ...right];
-  return parts.map(part => part || '0').join(':');
-};
+// Example usage:
+// Generate one IPv4 address
+console.log("Random IPv4:", generateIp());
 
 const userAgents = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -89,9 +56,8 @@ function getHeaders() {
     "Accept-Language": "en-US,en;q=0.5",
     Connection: "keep-alive",
     "User-Agent": getRandomUserAgent(),
-    "Client-IP": getRandomIPv6("2001:2::/48"),
+    "Client-IP": generateIp()
   };
 }
-console.log(getHeaders())
 
 export default getHeaders;

@@ -2,7 +2,6 @@ import { extractTwitterId } from "../utils/url.js";
 import getMetaInfo from "../service/meta.js";
 import downloadContent from "../service/download.js";
 import { filterTwitterMetaInfo } from "../service/filter.js";
-import { getCache, saveCache } from "../db/redis.js";
 import sanitizeFilename from "../utils/sanitize-filename.js";
 import injectHeaders from "../utils/headers.js";
 
@@ -21,16 +20,6 @@ async function getTwitterMeta(req, res) {
   const contentId = extractTwitterId(url);
 
   try {
-    const isCache = await getCache(contentId);
-    if (isCache !== null && isCache !== undefined) {
-      return res.status(200).json({
-        status: "success",
-        message: "Successfully fetched content information from cache",
-        error: "",
-        data: isCache,
-      });
-    }
-
     const metaInfo = await getMetaInfo("instagram", url);
     //first args is platform name
     const filteredMetaInfo = await filterTwitterMetaInfo(metaInfo);
@@ -69,15 +58,13 @@ async function downloadTwitterContent(req, res) {
 
   try {
     const contentId = await extractTwitterId(url);
-    let meta = await getCache(contentId); //cache from redis
+    let meta;
 
     /*function to get meta info in download functionality so that if someone invoked download function meta data is available*/
     if (meta == null || meta == undefined) {
       const metaInfo = await getMetaInfo("instagram", url);
       //first args is platform name
       const filteredMetaInfo = await filterTwitterMetaInfo(metaInfo);
-
-      const saveToDB = await saveCache(contentId, filteredMetaInfo);
       meta = filteredMetaInfo;
     }
 

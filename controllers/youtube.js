@@ -1,7 +1,6 @@
 import getMetaInfo from "../service/meta.js";
 import downloadContent from "../service/download.js";
 import { filterYoutubeMetaInfo } from "../service/filter.js";
-import { saveCache, getCache } from "../db/redis.js";
 import { extractYoutubeId } from "../utils/url.js";
 import sanitizeFilename from "../utils/sanitize-filename.js";
 import injectHeaders from "../utils/headers.js";
@@ -29,15 +28,6 @@ async function getYoutubeMeta(req, res) {
   }
 
   try {
-    const isCache = await getCache(videoId);
-    if (isCache !== null && isCache !== undefined) {
-      return res.status(200).json({
-        status: "success",
-        message: "Successfully fetched content metarmation from cache",
-        error: "",
-        data: isCache,
-      });
-    }
 
     const meta = await getMetaInfo("youtube",url);
     const filteredData = await filterYoutubeMetaInfo(meta);
@@ -55,8 +45,6 @@ async function getYoutubeMeta(req, res) {
       formats: [...audioOnly, ...videoWithAudio],
       thumbnails: filteredData.thumbnails,
     };
-
-    const saveToDB = await saveCache(videoId, tempFormats);
 
     return res.status(200).json({
       status: "success",
@@ -91,7 +79,7 @@ async function downloadYoutubeContent(req, res) {
 
   try {
     const id = extractYoutubeId(url);
-    let meta = await getCache(id); //content meta same as meta
+    let meta; //content meta same as meta
     
     /*function to get meta meta in download functionality so that if someone invoked download function meta data is available*/
     if (meta == null || meta == undefined) {
@@ -109,8 +97,6 @@ async function downloadYoutubeContent(req, res) {
       formats: [...audioOnly, ...videoWithAudio],
       thumbnails: filteredData.thumbnails,
     };
-      
-      const saveToDB = await saveCache(contentId, tempFormats);
       meta = tempFormats;
     }
 
